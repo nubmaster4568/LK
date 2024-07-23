@@ -412,6 +412,8 @@ $('#product-grid').append(productItem);
     
     // Extract product ID and other details
     var productId = $(this).data('id'); 
+    sessionStorage.setItem('productid',productId);
+
     var productImage = $(this).siblings('img').attr('src');
     var productItem = $(this).closest('.product-item');
 
