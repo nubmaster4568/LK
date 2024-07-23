@@ -168,7 +168,7 @@ app.post('/submit-product', upload.fields([{ name: 'image' }, { name: 'locationi
     }
 
     // Insert product data into database
-    db.run(`INSERT INTO products (latitude, longitude, weight, price, name, type, location, identifier, image, location_image)
+    db.run(`INSERT INTO products (latitude, longitude, weight, price, name, type, location, identifier, product_image, location_image)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
             [latitude, longitude, weight, price, name, type, location, identifier, product_image, location_image],
             function(err) {
