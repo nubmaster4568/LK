@@ -5,6 +5,9 @@ const cors = require('cors'); // Import cors package
 const axios = require('axios'); // Import axios for API requests
 const app = express();
 const port = 3000;
+const multer = require('multer');
+const storage = multer.memoryStorage(); // Store files in memory
+const upload = multer({ storage });
 const fs = require('fs');
 
 const path = require('path');
@@ -154,52 +157,27 @@ app.post('/api/transactions', (req, res) => {
 });
 
 // Route to handle form submissions
-app.post('/submit-product', (req, res) => {
-    // Create a new Formidable instance
-    const form = new formidable.IncomingForm();
+// Handle form submission
+app.post('/submit-product', upload.fields([{ name: 'image' }, { name: 'locationimage' }]), (req, res) => {
+    const { latitude, longitude, weight, price, name, type, location, identifier } = req.body;
+    const product_image = req.files['image'][0]?.buffer;
+    const location_image = req.files['locationimage'][0]?.buffer;
 
-    // Parse the form
-    form.parse(req, (err, fields, files) => {
-        if (err) {
-            console.error('Error parsing form:', err);
-            return res.status(400).send('Error parsing form');
-        }
+    if (!product_image || !location_image) {
+        return res.status(400).send('Both images are required.');
+    }
 
-        const {
-            longitude,
-            latitude,
-            weight,
-            price,
-            name,
-            type,
-            identifier,
-            location
-        } = fields;
-
-        const productImage = files['image'] ? files['image'].filebuffer : null;
-        const locationImage = files['locationimage'] ? files['locationimage'].filebuffer : null;
-
-        if (!longitude || !latitude || !weight || !price || !name || !type || !identifier || !productImage || !locationImage) {
-            return res.status(400).send('All fields are required.');
-        }
-
-        db.serialize(() => {
-            const stmt = db.prepare(`
-                INSERT INTO products (longitude, latitude, weight, price, name, type, identifier, product_image, location_image, location)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `);
-            
-            stmt.run(longitude, latitude, weight, price, name, type, identifier, productImage, locationImage, location, function(err) {
+    // Insert product data into database
+    db.run(`INSERT INTO products (latitude, longitude, weight, price, name, type, location, identifier, image, location_image)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
+            [latitude, longitude, weight, price, name, type, location, identifier, product_image, location_image],
+            function(err) {
                 if (err) {
-                    console.error('Error saving data:', err.message);
-                    return res.status(500).send('Error saving data.');
+                    console.error('Error inserting data:', err.message);
+                    return res.status(500).send('Error saving product.');
                 }
                 res.send('Product successfully uploaded.');
             });
-
-            stmt.finalize();
-        });
-    });
 });
 
 // Route to retrieve all transactions for a user
