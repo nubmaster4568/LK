@@ -12,11 +12,25 @@ const path = require('path');
 const { Telegraf } = require('telegraf');
 
 const db = new sqlite3.Database('db.db');
-const TELEGRAM_BOT_TOKEN = '7301642262:AAFoZuG35PLNP5Lv63u9EjZE6gnxY5n0LXQ'; // Replace with your actual token
+const TELEGRAM_BOT_TOKEN = '7487928760:AAFNzDJaONyEZT9aAVp2uTK-JB-a1VAbSBw'; // Replace with your actual token
 
 // Create a new instance of the TelegramBot class
 const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
-
+bot.onText(/\/start/, (msg) => {
+    const chatId = msg.chat.id; // Corrected variable name
+    bot.sendMessage(chatId, 'SHOP', {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {
+              text: 'SHOP',
+              web_app: { url: 'https://site-45i5.onrender.com/index.html' }
+            }
+          ]
+        ]
+      }
+    });
+  });
 // Start your bot (optional if you need it for other purposes)
 bot.startPolling();
 // Middleware to handle CORS
