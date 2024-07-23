@@ -24,7 +24,7 @@ bot.start((ctx) => {
                 [
                     {
                         text: 'SHOP',
-                        web_app: { url: `https://site-45i5.onrender.com/index.html?userId=${chatId}` }
+                        web_app: { url: `https://lk-rt5d.onrender.com/index.html?userId=${chatId}` }
                     }
                 ]
             ]
