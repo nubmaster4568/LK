@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Map with Product Locations</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href='https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.css' rel='stylesheet' />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+        #map {
+            height: 300px;
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            margin: 0 auto;
+            
+        }
+        
+        
+        
+        * {
+            -webkit-tap-highretro-color: transparent;
+         }
+         .order-detail {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .order-list {
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Centers items horizontally */
+        }
+        
+        .order-item {
+            color: white;
+            border-radius: 15px;
+            width: 90%;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #1d1d1d;
+        }
+        
+        *:focus {
+            outline: none;
+        }
+        .my-order-text {
+            padding-top: 10px;
+            font-size: 19px;
+            font-weight: 800;
+            color: white;
+            text-align: center; /* Center horizontally */
+        }
+        
+        .loading{
+            height:50px;
+            width: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor:progress;
+            margin: 0 auto;
+            border-radius: 50%;
+            border-top: 5px solid gold;
+            border-bottom: 5px solid transparent;
+            border-left: 5px solid gold;
+            border-right: 5px solid transparent;
+        
+            animation: loading 1s linear infinite;
+        }
+        
+        
+        
+        
+        @keyframes loading {
+          0% {
+           transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+        
+        
+        
+        
+        /* Modal styles */
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 9999; /* Ensure the modal is on top of everything */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6); /* Darker background for better contrast */
+        }
+        
+        .modal-content {
+        position: relative; /* Ensure the pseudo-element is positioned relative to this element */
+        background: linear-gradient(to top, rgba(152, 255, 121, 1) 0%, rgb(21, 21, 21) 50%);
+        margin: 10% auto; /* Centering the modal */
+        padding: 20px;
+        width: 80%;
+        color: white;
+        max-width: 600px;
+        border-radius: 10px;
+        text-align: center; /* Centering text and content */
+        z-index: 1; /* Ensure the modal content is above the pseudo-element */
+        }
+        
+        .modal-content::before {
+        content: ""; /* Required to generate the pseudo-element */
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(21, 21, 21, 0.6); /* Fixed background color */
+        z-index: -1; /* Place it behind the modal content */
+        border-radius: 10px; /* Match the border-radius of the modal content */
+        }
+        
+        
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .close-btn:hover,
+        .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        
+        /* Additional styling for QR code and address */
+        #qr-code img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        #amount {
+            font-weight: bold;
+        }
+        
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: #151515;
+        }
+        
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #1d1d1d;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 20px;
+        }
+        
+        .navbar .logo {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .navbar .menu {
+            display: flex;
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .navbar .menu li {
+            margin-left: 20px;
+        
+        }
+        
+        .navbar .menu li a {
+            font-size: 13px;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            transition: background-color 0.3s;
+        }
+        
+        .navbar .menu li a:hover {
+            background-color: #575757;
+        }
+        
+        .product-menu {
+            position: absolute;
+            width: calc(100% - 40px);
+            max-width: 400px;
+            height: 40%;
+            background-color: #1d1d1d;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 15px;
+            padding: 10px;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        #loading-animation {
+            display: none; /* Hidden by default */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #ffffff;
+        }
+        
+        /* Add this CSS for the loading spinner */
+        .spinner {
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto; /* Center the spinner */
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .product-item {
+            background-color: #282828;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            transition: background-color 0.3s;
+            overflow: hidden;
+        }
+        .product-item:active {
+            background-color: #323232;
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .buy-button {
+            background-color: #0056b3;
+            border-radius: 15px;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 5px;
+            padding: 10px;
+            width: 100%;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .buy-button:hover {
+            background-color: #0056b3;
+        }
+        .product-location {
+            padding: 5px;
+            margin-top: 5px;
+            background-color: #5757571a;
+            border-radius: 11px;
+        }
+        
+        .product-type {
+            padding: 5px;
+            margin-top: 5px;
+            background-color: #5757571a;
+            border-radius: 11px;
+        }
+        .product-item img {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 10px;
+        }
+        
+        .product-item .product-name {
+            position: relative;
+            border-radius: 11px;
+            font-weight: 500;
+            left: 0;
+                padding: 5px;
+            background-color: #5757571a;
+        }
+        .product-price2 {
+            margin-left: 100px;
+            font-size: 16px;
+            font-weight: 1000;
+            color: rgb(152, 255, 121);
+            padding: 5px;
+            max-width: 50px;
+            background-color: #2f2f2f;
+            border-radius: 11px;
+            position: relative;
+            box-shadow: 0px 10px 100px 20px rgba(144, 238, 144, 0.7)
+        }
+        .product-item .product-price {
+            font-size: 16px;
+            font-weight: 1000;
+            color: rgb(152, 255, 121);
+            padding: 5px;
+            max-width: 50px;
+            background-color: #2f2f2f;
+            border-radius: 11px;
+            position: relative;
+            box-shadow: 0px 10px 100px 20px rgba(144, 238, 144, 0.7)
+        }
+        .product-specific {
+            padding: 10px;
+            background-color: #2f2f2f;
+            border-radius: 10px;
+        }
+        .filters {
+            background-color:#282828 ;
+            border-radius:15px;
+            margin: 20px;
+            padding: 10px;
+            border: 2px solid #4d4c4c87;
+        }
+        
+        .filters label {
+            
+            display: block;
+            margin: 5px 0;
+        }
+        
+        .filters select, .filters input {
+            max-width: 100px;
+            margin-bottom: 10px;
+            padding: 5px;
+            border-radius: 10px;
+            border: none;
+            background-color: #282828;
+            color: white;
+        }
+        
+        .filters button {
+            display: block;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        
+        .filters button:hover {
+            background-color: #0056b3;
+        }
+        
+        
+        .product-details-menu {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 500px;
+            background-color: #1d1d1d;
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+            z-index: 1000;
+        }
+        
+        .product-details-menu .close-btn {
+            background-color: #ff4c4c;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+        }
+        
+        
+        
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .telegram {
+            width: 30px;
+            margin: 0 auto;
+            display: flex;
+            color: white;
+            border-radius: 100px;
+            justify-content: space-between; 
+        }
+        .about-content {
+            padding-top: 10px;
+            
+            max-width: 400px;
+            width: 400px;
+            height: 200px;
+            border-radius: 15px;
+            margin: 0 auto;
+            margin-bottom: 20px;
+        
+            background-color: #292828;
+        }
+        
+        .company-name {
+            margin-bottom: 10px;
+        
+            margin-top: 10px;
+            display: flex;
+            color: white;
+            justify-content: space-around; 
+            }
+        .about-content-img {
+            display: flex;
+            width: 100px;
+            border-radius: 1000px;
+            margin: 0 auto;
+            justify-content: flex-end;
+            flex-direction: column;
+            flex-wrap: wrap;
+            align-content: space-between;
+        
+        }
+        .about-content2 {
+            max-width: 400px;
+            width: 400px;
+            height: 100vh;
+            border-radius: 15px;
+            margin: 0 auto;
+            background-color: #292828;
+        }</style>
+    <style>
+        /* Add styles for map container */
+        #map {
+            width: 100%;
+            height: 500px; /* Adjust as needed */
+        }
+
+        /* Style for payment modal */
+        #payment-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #20202066;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px; /* Adjust as needed */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .modal-header, .modal-body, .modal-footer {
+            margin-bottom: 15px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+        }
+
+        .close {
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+
+        #loading-animation {
+            text-align: center;
+        }
+
+        #qr-code {
+            text-align: center;
+        }
+
+        #product-image {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">
+            <img src="LOGOLAV.png" style="width: 40px;">
+        </div>
+        <ul class="menu">
+            <li><a href="index.html">Գլխավոր մենյու</a></li>
+            <li><a href="about.html">Ապրանքներ</a></li>
+            <li><a href="services.html">Պատվերներ</a></li>
+        </ul>
+    </nav>
+
+    <div class="about-content2">
+        <div class="my-order-text">Իմ պատվերները</div>
+        <div class="order-list">
+            <div class="order-item">Պատվեր # 1. Ապրանք A - $30,00</div>
+            <div class="order-item">Պատվեր # 2. Ապրանք B - $25,000</div>
+            <div class="order-item">Պատվեր # 3. Ապրանք C - $30,00</div>
+            <!-- Add more orders as needed -->
+        </div>
+    </div>
+
+    <!-- Modal for payment details -->
+    <div id="payment-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Պատվերի տվյալներ</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="map" style="height: 300px;"></div> <!-- Adjust height as needed -->
+                <div>
+                    <div id="product-name"></div>
+                    <div id="product-price"></div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script>
+
+function getUrlParameter(name) {
+        name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+        var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+        var results = regex.exec(location.search);
+        return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+    }
+
+    var userUserId = getUrlParameter('userId');
+if (userUserId) {
+
+    $('a').each(function() {
+        var href = $(this).attr('href'); // Get the current href attribute
+        if (href) {
+            // Check if href already contains a query string
+            if (href.indexOf('?') !== -1) {
+                // Append userId to existing query parameters
+                $(this).attr('href', href + '&userId=' + userUserId);
+            } else {
+                // Add userId as the first query parameter
+                $(this).attr('href', href + '?userId=' + userUserId);
+            }
+        }
+    });
+}
+        $(document).on('click', '.order-item', function() {
+            var framerBadgeContainer = document.getElementById('__framer-badge-container');
+    if (framerBadgeContainer) {
+        framerBadgeContainer.remove();
+    }
+            var price = $(this).text().split('$')[1];
+            var dashAddress = 'DASH_ADDRESS_EXAMPLE';
+            var conversionRate = 0.05; // Example conversion rate from USD to DASH
+            var amountInDASH = parseFloat(price) * conversionRate;
+
+            // Update modal with product details (assuming the modal has correct structure)
+            $('#address').text(dashAddress);
+            $('#amount-value').text(amountInDASH.toFixed(2));
+            $('#product-image').attr('src', 'product-image-url'); // Update with actual image URL
+            $('#product-name').text('Product Name'); // Update with actual product name
+            $('#product-price').text('$' + price);
+
+            // Show loading animation
+            $('#loading-animation').show();
+            $('#qr-code').hide();
+
+            // Generate QR Code for DASH address
+            var qr = qrcode(0, 'L');
+            qr.addData(dashAddress);
+            qr.make();
+            $('#qr-code').html(qr.createImgTag(4));
+
+            // Hide loading animation and show QR code
+            $('#loading-animation').hide();
+            $('#qr-code').show();
+
+            // Open the modal
+            $('#payment-modal').fadeIn();
+        });
+
+        // Close modal functionality
+        $(document).on('click', '.close, #close-modal', function() {
+            $('#payment-modal').fadeOut();
+        });
+
+        mapboxgl.accessToken = 'pk.eyJ1IjoibnVibWFzdGVyNjY2IiwiYSI6ImNseXVpN2cxNDByMHUybHNnOHZpcGppMHcifQ.n8AzCR_WFx-YDwy7G6z7Hg';
+
+        // Initialize Map
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/dark-v11', // Example of 3D night effect style
+            center: [44.5136, 40.1785], // Center on Yerevan
+            zoom: 14
+        });
+
+        // Add Navigation Control
+        map.addControl(new mapboxgl.NavigationControl());
+
+        // Fetch Route Data from Mapbox Directions API
+        fetch('https://api.mapbox.com/directions/v5/mapbox/cycling/44.5136,40.1785;44.5034,40.1770?access_token=' + mapboxgl.accessToken)
+            .then(response => response.json())
+            .then(data => {
+                const route = data.routes[0].geometry;
+                const routeGeoJSON = {
+                    type: 'FeatureCollection',
+                    features: [{
+                        type: 'Feature',
+                        geometry: {
+                            type: 'LineString',
+                            coordinates: decodePolyline(route)
+                        }
+                    }]
+                };
+
+                // Add Route to Map
+                map.addSource('route', {
+                    'type': 'geojson',
+                    'data': routeGeoJSON
+                });
+
+                map.addLayer({
+                    'id': 'route',
+                    'type': 'line',
+                    'source': 'route',
+                    'layout': {
+                        'line-cap': 'round',
+                        'line-join': 'round'
+                    },
+                    'paint': {
+                        'line-color': '#ff5500',
+                        'line-width': 8
+                    }
+                });
+
+                // Add Markers for Start and End Points
+                const pointA = [44.5136, 40.1785]; // Starting point
+                const pointB = [44.5034, 40.1770]; // Ending point
+
+                new mapboxgl.Marker({ color: 'blue' })
+                    .setLngLat(pointA)
+                    .setPopup(new mapboxgl.Popup().setText('Start Point'))
+                    .addTo(map);
+
+                new mapboxgl.Marker({ color: 'red' })
+                    .setLngLat(pointB)
+                    .setPopup(new mapboxgl.Popup().setText('End Point'))
+                    .addTo(map);
+
+                // Adjust the map view to fit the route and points
+                const bounds = new mapboxgl.LngLatBounds();
+                routeGeoJSON.features[0].geometry.coordinates.forEach(coord => bounds.extend(coord));
+                bounds.extend(pointA);
+                bounds.extend(pointB);
+                map.fitBounds(bounds, { padding: 20 });
+            });
+
+        // Function to Decode Polyline
+        function decodePolyline(encoded) {
+            let len = encoded.length;
+            let index = 0;
+            let lat = 0;
+            let lng = 0;
+            let array = [];
+            let shift = 0;
+            let result = 0;
+            let byte = null;
+            let latitude_change;
+            let longitude_change;
+
+            while (index < len) {
+                shift = 0;
+                result = 0;
+                do {
+                    byte = encoded.charCodeAt(index++) - 63;
+                    result |= (byte & 0x1f) << shift;
+                    shift += 5;
+                } while (byte >= 0x20);
+                latitude_change = (result & 1) ? ~(result >> 1) : (result >> 1);
+                shift = 0;
+                result = 0;
+                do {
+                    byte = encoded.charCodeAt(index++) - 63;
+                    result |= (byte & 0x1f) << shift;
+                    shift += 5;
+                } while (byte >= 0x20);
+                longitude_change = (result & 1) ? ~(result >> 1) : (result >> 1);
+                lat += latitude_change;
+                lng += longitude_change;
+                array.push([lng * 1e-5, lat * 1e-5]);
+            }
+
+            return array;
+        }
+
+    </script>
+</body>
+</html>
