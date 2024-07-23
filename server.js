@@ -61,8 +61,8 @@ db.serialize(() => {
 async function createWalletAddress() {
     try {
         const response = await axios.post('https://coinremitter.com/api/v3/LTC/get-new-address', {
-            api_key: '$2b$10$t2DWJHkNYCoCJoo2fFJVBe4nxVxA6WEubyW5ehFeiVNiOg7VxgZc6',  // Replace with your actual API key
-            password: 'qwerty1234' // Replace with your actual wallet password
+            api_key: '$2b$10$HLFBE62u7cX1iVMA9jEYJumZ5Mwi6Xme/GcNEY8TeFmkqIzidw7Fe',  // Replace with your actual API key
+            password: 'lavkanal123' // Replace with your actual wallet password
         });
 
         if (response.data.flag === 1) {
