@@ -424,78 +424,79 @@ $('#product-grid').append(productItem);
     var productPrice = $(this).data('price');
     
     // Fetch conversion rate from API
-    $.ajax({
-        url: 'https://coinremitter.com/api/v3/LTC/get-fiat-to-crypto-rate',
-        method: 'POST',
-        contentType: 'application/json',
-        data: JSON.stringify({
-            api_key: '$2b$10$t2DWJHkNYCoCJoo2fFJVBe4nxVxA6WEubyW5ehFeiVNiOg7VxgZc6', // Replace with your actual API key
-            password: 'qwerty1234', // Replace with your actual wallet password
-            fiat_symbol: 'USD', // Replace with the fiat symbol you are using
-            fiat_amount: parseInt(price) // Amount to be converted
-        }),
-        success: function(response) {
-            if (response.flag === 1) {
-                var amountInDASH = response.data.crypto_amount;
-                
-                // Update modal with product details
-                $('#address').text(dashAddress);
-                
-                // Define CSS properties for word breaking
-                var wordBreakingProperties = {
-                    'word-wrap': 'break-word',  // Allow long words to be broken and wrap onto the next line
-                    'overflow-wrap': 'break-word', // Ensure long words or URLs break properly
-                    'word-break': 'break-all', // Break words at any point if necessary
-                    'max-width': '100%' // Ensure the element does not exceed the width of its container
-                };
+// Assuming you have 'price' as the amount in fiat currency you want to convert
+$.ajax({
+    url: 'https://api.coingecko.com/api/v3/simple/price',
+    method: 'GET',
+    data: {
+        ids: 'litecoin',       // Cryptocurrency ID (e.g., 'litecoin' for LTC)
+        vs_currencies: 'usd'   // Currency to compare against (e.g., 'usd')
+    },
+    success: function(response) {
+        if (response.litecoin) {
+            var ltcPriceInUSD = response.litecoin.usd;
+            var amountInLTC = parseFloat(price) / ltcPriceInUSD; // Convert fiat amount to LTC
 
-                // Apply the CSS properties to the #address element
-                $('#address').css(wordBreakingProperties);
+            // Update modal with product details
+            $('#address').text(dashAddress);
 
-                $('#amount-value').text(amountInDASH);
-                $('#product-name').text(productName);
-                $('#product-price').text('$' + parseFloat(price).toFixed(2));
+            // Define CSS properties for word breaking
+            var wordBreakingProperties = {
+                'word-wrap': 'break-word',  // Allow long words to be broken and wrap onto the next line
+                'overflow-wrap': 'break-word', // Ensure long words or URLs break properly
+                'word-break': 'break-all', // Break words at any point if necessary
+                'max-width': '100%' // Ensure the element does not exceed the width of its container
+            };
 
-                // Show loading animation
-                $('#loading-animation').show();
-                $('#qr-code').hide();
+            // Apply the CSS properties to the #address element
+            $('#address').css(wordBreakingProperties);
 
-                // Generate QR Code for DASH address
-                var qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(dashAddress);
-                $('#qr-code').attr('src', qrCodeUrl).show();
+            $('#amount-value').text(amountInLTC.toFixed(6)); // Display LTC amount
+            $('#product-name').text(productName);
+            $('#product-price').text('$' + parseFloat(price).toFixed(2));
 
-                // Show payment modal
-                $('#payment-modal').fadeIn();
-                console.log(amountInDASH)
-                $.ajax({
-                    url: 'https://lk-rt5d.onrender.com/api/transactions',
-                    method: 'POST',
-                    contentType: 'application/json',
-                    data: JSON.stringify({
-                        productName: productName,
-                        productPrice: parseFloat(price).toFixed(2),
-                        productId: productId,
-                        user: sessionStorage.getItem('user'),
-                        crypto: amountInDASH,
-                        lat:lat,
-                        lng: lng
-                    }),
-                    success: function(response) {
-                        console.log('Transaction recorded successfully:', response);
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error recording transaction:', xhr.responseText); // Log server response for more details
-                    }
-                });
+            // Show loading animation
+            $('#loading-animation').show();
+            $('#qr-code').hide();
 
-            } else {
-                console.error('Error fetching conversion rate:', response.msg);
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('Error fetching conversion rate:', xhr.responseText); // Log server response for more details
+            // Generate QR Code for DASH address
+            var qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(dashAddress);
+            $('#qr-code').attr('src', qrCodeUrl).show();
+
+            // Show payment modal
+            $('#payment-modal').fadeIn();
+            console.log(amountInLTC.toFixed(6));
+
+            $.ajax({
+                url: 'https://lk-rt5d.onrender.com/api/transactions',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    productName: productName,
+                    productPrice: parseFloat(price).toFixed(2),
+                    productId: productId,
+                    user: sessionStorage.getItem('user'),
+                    crypto: amountInLTC.toFixed(6),
+                    lat: lat,
+                    lng: lng
+                }),
+                success: function(response) {
+                    console.log('Transaction recorded successfully:', response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error recording transaction:', xhr.responseText); // Log server response for more details
+                }
+            });
+
+        } else {
+            console.error('Error fetching conversion rate:', 'Litecoin price data not found');
         }
-    });
+    },
+    error: function(xhr, status, error) {
+        console.error('Error fetching conversion rate:', xhr.responseText); // Log server response for more details
+    }
+});
+
 });
 
 
