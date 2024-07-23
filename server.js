@@ -16,23 +16,7 @@ const TELEGRAM_BOT_TOKEN = '7487928760:AAFNzDJaONyEZT9aAVp2uTK-JB-a1VAbSBw'; // 
 
 // Create a new instance of the TelegramBot class
 const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
-bot.start((ctx) => {
-    const chatId = ctx.chat.id; // Get chat ID from the context
-    ctx.reply('SHOP', {
-        reply_markup: {
-            inline_keyboard: [
-                [
-                    {
-                        text: 'SHOP',
-                        web_app: { url: `https://lk-rt5d.onrender.com/index.html?userId=${chatId}` }
-                    }
-                ]
-            ]
-        }
-    });
-});
 
-bot.launch();
 // Middleware to handle CORS
 app.use(cors()); // Enable CORS for all routes
 
