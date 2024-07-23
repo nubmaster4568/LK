@@ -16,23 +16,23 @@ const TELEGRAM_BOT_TOKEN = '7487928760:AAFNzDJaONyEZT9aAVp2uTK-JB-a1VAbSBw'; // 
 
 // Create a new instance of the TelegramBot class
 const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
-bot.onText(/\/start/, (msg) => {
-    const chatId = msg.chat.id; // Corrected variable name
-    bot.sendMessage(chatId, 'SHOP', {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {
-              text: 'SHOP',
-              web_app: { url: 'https://site-45i5.onrender.com/index.html' }
-            }
-          ]
-        ]
-      }
+bot.start((ctx) => {
+    const chatId = ctx.chat.id; // Get chat ID from the context
+    ctx.reply('SHOP', {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: 'SHOP',
+                        web_app: { url: 'https://site-45i5.onrender.com/index.html' }
+                    }
+                ]
+            ]
+        }
     });
-  });
-// Start your bot (optional if you need it for other purposes)
-bot.startPolling();
+});
+
+bot.launch();
 // Middleware to handle CORS
 app.use(cors()); // Enable CORS for all routes
 
