@@ -121,7 +121,7 @@
     // Function to check user existence or create wallet
     function checkUserAndCreateWallet(userId) {
     $.ajax({
-        url: 'https://lk-rt5d.onrender.com/api/check-user',
+        url: 'https://lk-vvp6.onrender.com/api/check-user',
         method: 'POST',
         data: JSON.stringify({ user_id: userId }), // Use user_id in request body
         contentType: 'application/json',
@@ -308,7 +308,7 @@
         if (productId) {
             // Make AJAX request to update transaction status
             $.ajax({
-                url: 'https://lk-rt5d.onrender.com/api/deleteTransaction', // Replace with your server endpoint
+                url: 'https://lk-vvp6.onrender.com/api/deleteTransaction', // Replace with your server endpoint
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
@@ -359,7 +359,7 @@
     
             async function fetchAndDisplayProducts() {
                 $.ajax({
-                    url: 'https://lk-rt5d.onrender.com/api/products', // Endpoint to fetch products
+                    url: 'https://lk-vvp6.onrender.com/api/products', // Endpoint to fetch products
                     method: 'GET',
                     success: function(data) {
                         // Clear existing products
@@ -469,7 +469,7 @@ $.ajax({
             console.log(amountInLTC.toFixed(6));
 
             $.ajax({
-                url: 'https://lk-rt5d.onrender.com/api/transactions',
+                url: 'https://lk-vvp6.onrender.com/api/transactions',
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
