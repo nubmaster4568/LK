@@ -331,7 +331,7 @@ app.post('/webhook', (req, res) => {
             return;
         }
 
-        // Handle address and amount
+        console.log(fields)
         const address = Array.isArray(fields.address) ? fields.address[0] : fields.address;
         const amount = fields.amount;
 
