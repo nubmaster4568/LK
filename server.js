@@ -419,7 +419,7 @@ app.post('/webhook', (req, res) => {
                                         });
 
                                     // Send confirmation message to user
-                                    bot.telegram.sendMessage(trimmedAddressLabel, Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}, { parse_mode: 'HTML' });
+bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
                                 });
                             } else {
                                 console.log('No location image found for the product.');
@@ -427,7 +427,7 @@ app.post('/webhook', (req, res) => {
                                 bot.telegram.sendMessage(trimmedAddressLabel, 'Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:');
 
                                 // Send confirmation message to user
-                                bot.telegram.sendMessage(trimmedAddressLabel, Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}, { parse_mode: 'HTML' });
+bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
                             }
                         } else {
                             console.log('No product found for the given product ID.');
