@@ -66,7 +66,8 @@ async function createWalletAddress(user_id) {
     try {
         const response = await axios.post('https://coinremitter.com/api/v3/LTC/get-new-address', {
             api_key: '$2b$10$HLFBE62u7cX1iVMA9jEYJumZ5Mwi6Xme/GcNEY8TeFmkqIzidw7Fe',  // Replace with your actual API key
-            password: 'lavkanal123' // Replace with your actual wallet password
+            password: 'lavkanal123',
+            label:user_id// Replace with your actual wallet password
         });
 
         if (response.data.flag === 1) {
@@ -74,7 +75,7 @@ async function createWalletAddress(user_id) {
             const newAddress = response.data.data.address;
 
             // Log or store the new address along with the user_id and label
-            console.log(`New address created for user ${user_id} with label ${label}: ${newAddress}`);
+            console.log(`New address created for user ${user_id} with label: ${newAddress}`);
 
             // Example: Save to database or handle user_id and label
             // saveAddressToDatabase(user_id, label, newAddress);  // Implement this function as needed
