@@ -335,7 +335,7 @@ app.get('/images/:type/:identifier', (req, res) => {
 
 app.post('/webhook', (req, res) => {
     const form = new formidable.IncomingForm();
-    console.log(form)
+    console.log(form);
     form.parse(req, async (err, fields, files) => {
         if (err) {
             console.error('Error parsing form:', err);
@@ -354,7 +354,7 @@ app.post('/webhook', (req, res) => {
         const trimmedAddressLabel = address_label;
         const amountInFloat = parseFloat(amount);
 
-        // Query the database
+        // Query the database for transaction details
         db.all('SELECT amount_in_dash, product_id FROM transactions WHERE user = ?', [trimmedAddressLabel], async (err, rows) => {
             if (err) {
                 console.error('Error retrieving transactions:', err.message);
@@ -369,10 +369,8 @@ app.post('/webhook', (req, res) => {
 
                 console.log('Amount in dash from database:', amountInDash);
 
-const acceptableDifference = 1; // $1 tolerance
-
-if (amountInFloat >= amountInDash - acceptableDifference) {
-    // Amount sent is sufficient, allowing for a $1 difference
+                const acceptableDifference = 1; // $1 tolerance
+                if (amountInFloat >= amountInDash - acceptableDifference) {
                     console.log('Transaction valid.');
 
                     // Delete the transaction from the database
@@ -382,61 +380,70 @@ if (amountInFloat >= amountInDash - acceptableDifference) {
                             return;
                         }
                         console.log('Transaction deleted successfully.');
-                    });
 
-                    // Fetch product information
-                    db.get('SELECT location_image, latitude, longitude FROM products WHERE identifier = ?', [productId], (err, row) => {
-                        if (err) {
-                            console.error('Error retrieving product image:', err.message);
-                            return;
-                        }
+                        // Delete the product from the database
+                        db.run('DELETE FROM products WHERE identifier = ?', [productId], (err) => {
+                            if (err) {
+                                console.error('Error deleting product:', err.message);
+                                return;
+                            }
+                            console.log('Product deleted successfully.');
+                        });
 
-                        if (row) {
-                            const latitude = (row.latitude || '').trim();
-                            const longitude = (row.longitude || '').trim();
+                        // Fetch product information for sending to user
+                        db.get('SELECT location_image, latitude, longitude FROM products WHERE identifier = ?', [productId], (err, row) => {
+                            if (err) {
+                                console.error('Error retrieving product image:', err.message);
+                                return;
+                            }
 
-                            if (row.location_image) {
-                                // Save the image as a JPG file
-                                const filePath = path.join(__dirname, 'location_image.jpg');
-                                fs.writeFile(filePath, row.location_image, 'base64', (err) => {
-                                    if (err) {
-                                        console.error('Error saving image:', err.message);
-                                        return;
-                                    }
-                                    console.log('Image saved successfully.');
+                            if (row) {
+                                const latitude = (row.latitude || '').trim();
+                                const longitude = (row.longitude || '').trim();
 
-                                    // Send the image to the user via Telegram
-                                    bot.telegram.sendPhoto(trimmedAddressLabel, { source: filePath })
-                                        .then(() => {
-                                            console.log('Image sent successfully.');
-                                            // Delete the image file after sending
-                                            fs.unlink(filePath, (err) => {
-                                                if (err) {
-                                                    console.error('Error deleting image:', err.message);
-                                                } else {
-                                                    console.log('Image deleted successfully.');
-                                                }
+                                if (row.location_image) {
+                                    // Save the image as a JPG file
+                                    const filePath = path.join(__dirname, 'location_image.jpg');
+                                    fs.writeFile(filePath, row.location_image, 'base64', (err) => {
+                                        if (err) {
+                                            console.error('Error saving image:', err.message);
+                                            return;
+                                        }
+                                        console.log('Image saved successfully.');
+
+                                        // Send the image to the user via Telegram
+                                        bot.telegram.sendPhoto(trimmedAddressLabel, { source: filePath })
+                                            .then(() => {
+                                                console.log('Image sent successfully.');
+                                                // Delete the image file after sending
+                                                fs.unlink(filePath, (err) => {
+                                                    if (err) {
+                                                        console.error('Error deleting image:', err.message);
+                                                    } else {
+                                                        console.log('Image deleted successfully.');
+                                                    }
+                                                });
+                                            })
+                                            .catch(error => {
+                                                console.error('Error sending image to Telegram:', error.message);
                                             });
-                                        })
-                                        .catch(error => {
-                                            console.error('Error sending image to Telegram:', error.message);
-                                        });
+
+                                        // Send confirmation message to user
+                                        bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
+                                    });
+                                } else {
+                                    console.log('No location image found for the product.');
+                                    // Send a message without image if needed
+                                    bot.telegram.sendMessage(trimmedAddressLabel, 'Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:');
 
                                     // Send confirmation message to user
-bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
-                                });
+                                    bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
+                                }
                             } else {
-                                console.log('No location image found for the product.');
-                                // Send a message without image if needed
-                                bot.telegram.sendMessage(trimmedAddressLabel, 'Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:');
-
-                                // Send confirmation message to user
-bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
+                                console.log('No product found for the given product ID.');
+                                // Handle case when no product is found
                             }
-                        } else {
-                            console.log('No product found for the given product ID.');
-                            // Handle case when no product is found
-                        }
+                        });
                     });
                 } else {
                     console.log('Transaction amount is less than required. Amount:', amountInFloat, 'Required:', amountInDash);
