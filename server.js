@@ -62,6 +62,7 @@ db.serialize(() => {
 
 // Function to create a new wallet address
 async function createWalletAddress(user_id) {
+    console.log(user_id)
     try {
         const response = await axios.post('https://coinremitter.com/api/v3/LTC/get-new-address', {
             api_key: '$2b$10$HLFBE62u7cX1iVMA9jEYJumZ5Mwi6Xme/GcNEY8TeFmkqIzidw7Fe',  // Replace with your actual API key
