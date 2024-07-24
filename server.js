@@ -401,7 +401,7 @@ app.post('/webhook', (req, res) => {
                                             console.log('Image saved successfully.');
 
                                             // Send the image to the user via Telegram
-                                            bot.telegram.sendPhoto(trimmedAddressLabel, { source: filePath })
+                                            bot.telegram.sendPhoto(userId, { source: filePath })
                                                 .then(() => {
                                                     console.log('Image sent successfully.');
                                                     // Delete the image file after sending
@@ -418,15 +418,15 @@ app.post('/webhook', (req, res) => {
                                                 });
 
                                             // Send confirmation message to user
-                                            bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
+                                            bot.telegram.sendMessage(userId, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
                                         });
                                     } else {
                                         console.log('No location image found for the product.');
                                         // Send a message without image if needed
-                                        bot.telegram.sendMessage(trimmedAddressLabel, 'Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:');
+                                        bot.telegram.sendMessage(userId, 'Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:');
 
                                         // Send confirmation message to user
-                                        bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
+                                        bot.telegram.sendMessage(userId, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
                                     }
                                 } else {
                                     console.log('No product found for the given product ID.');
@@ -435,7 +435,7 @@ app.post('/webhook', (req, res) => {
                             });
                         } else {
                             console.log('Transaction amount is less than required. Amount:', amountInFloat, 'Required:', amountInDash);
-                            bot.telegram.sendMessage(trimmedAddressLabel, 'Գործարքի գումարը պահանջվածից պակաս է: ');
+                            bot.telegram.sendMessage(userId, 'Գործարքի գումարը պահանջվածից պակաս է: ');
                         }
                     } else {
                         console.log('No transactions found for the user.');
