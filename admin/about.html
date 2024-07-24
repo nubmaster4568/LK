@@ -200,7 +200,7 @@ if (userUserId) {
 
             const formData = new FormData(this);
 
-            fetch('https://lk-rt5d.onrender.com/submit-product', {
+            fetch('https://lk-vvp6.onrender.com/submit-product', {
                 method: 'POST',
                 body: formData
             })
@@ -233,7 +233,7 @@ if (userUserId) {
 
             const searchIdentifier = document.getElementById('search-identifier').value;
 
-            fetch(`https://lk-rt5d.onrender.com/product/${encodeURIComponent(searchIdentifier)}`, {
+            fetch(`https://lk-vvp6.onrender.com/product/${encodeURIComponent(searchIdentifier)}`, {
                 method: 'GET'
             })
             .then(response => {
@@ -260,7 +260,7 @@ if (userUserId) {
                     `;
 
                     document.getElementById('delete-btn').addEventListener('click', function () {
-                        fetch(`https://lk-rt5d.onrender.com/product/${encodeURIComponent(data.identifier)}`, {
+                        fetch(`https://lk-vvp6.onrender.com/product/${encodeURIComponent(data.identifier)}`, {
                             method: 'DELETE'
                         })
                         .then(response => {
