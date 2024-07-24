@@ -369,7 +369,7 @@ app.post('/webhook', (req, res) => {
 
                 console.log('Amount in dash from database:', amountInDash);
 
-const acceptableDifference = 1.00; // $1 tolerance
+const acceptableDifference = 1; // $1 tolerance
 
 if (amountInFloat >= amountInDash - acceptableDifference) {
     // Amount sent is sufficient, allowing for a $1 difference
