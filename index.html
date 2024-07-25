@@ -108,7 +108,7 @@
                 try {
                     console.log('Fetching locations...');
                     const response = await $.ajax({
-                        url: 'http://localhost:3000/api/locations',
+                        url: 'https://lk-rt5d.onrender.com/api/locations',
                         method: 'GET'
                     });
                     
@@ -128,7 +128,7 @@
                 try {
                     console.log('Fetching and displaying products...');
                     let response = await $.ajax({
-                        url: 'http://localhost:3000/api/products',
+                        url: 'https://lk-rt5d.onrender.com/api/products',
                         method: 'GET'
                     });
         
@@ -199,7 +199,7 @@
                 try {
                     console.log('Checking user and creating wallet...');
                     const response = await $.ajax({
-                        url: 'http://localhost:3000/api/check-user',
+                        url: 'https://lk-rt5d.onrender.com/api/check-user',
                         method: 'POST',
                         data: JSON.stringify({ user_id: userId }),
                         contentType: 'application/json'
@@ -335,7 +335,7 @@
                 var productName = $(this).siblings('.product-specific').find('.product-type').text();
                 var userId = getUrlParameter('userId');
         
-                var purchaseUrl = `http://localhost:3000/api/purchase?userId=${userId}&price=${price}&lat=${lat}&lng=${lng}&dashAddress=${dashAddress}&productName=${productName}&productId=${productId}`;
+                var purchaseUrl = `https://lk-rt5d.onrender.com/api/purchase?userId=${userId}&price=${price}&lat=${lat}&lng=${lng}&dashAddress=${dashAddress}&productName=${productName}&productId=${productId}`;
         
                 try {
                     const response = await $.ajax({
