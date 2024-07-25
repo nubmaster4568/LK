@@ -14,7 +14,6 @@ const path = require('path');
 const { Telegraf } = require('telegraf');
 const sharp = require('sharp');
 
-const db = new sqlite3.Database('db.db');
 const TELEGRAM_BOT_TOKEN = '7487928760:AAFNzDJaONyEZT9aAVp2uTK-JB-a1VAbSBw'; // Replace with your actual token
 
 // Create a new instance of the TelegramBot class
