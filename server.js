@@ -456,24 +456,26 @@ app.get('/product/:identifier', async (req, res) => {
 
 
 app.post('/webhook', (req, res) => {
-    let body = '';
+    const form = new formidable.IncomingForm();
 
-    req.on('data', chunk => {
-        body += chunk.toString(); // Append each chunk to the body
-    });
+    form.parse(req, async (err, fields, files) => {
+        if (err) {
+            console.error('Error parsing form:', err);
+            res.status(400).send('Error parsing form');
+            return;
+        }
 
-    req.on('end', async () => {
+        // Extract form data
+        const address_label = Array.isArray(fields.address_label) ? fields.address_label[0] : fields.address_label;
+        const amount = fields.amount;
+
+        console.log('Received address_label:', address_label);
+        console.log('Received amount:', amount);
+
+        const trimmedAddressLabel = address_label;
+        const amountInFloat = parseFloat(amount);
+
         try {
-            const data = JSON.parse(body);
-            const address_label = data.address_label;
-            const amount = data.amount;
-
-            console.log('Received address_label:', address_label);
-            console.log('Received amount:', amount);
-
-            const trimmedAddressLabel = address_label;
-            const amountInFloat = parseFloat(amount);
-
             // Query the database for all transactions
             const allTransactions = await client.query('SELECT * FROM transactions');
             console.log('All transactions in the database:');
@@ -566,13 +568,14 @@ app.post('/webhook', (req, res) => {
                 console.log('No transactions found for the user.');
                 bot.telegram.sendMessage(trimmedAddressLabel, 'Մենք չգտանք ձեր գործարքը մեր տվյալներում: ');
             }
+
+            res.status(200).send('Webhook received');
         } catch (error) {
             console.error('Error processing webhook:', error.message);
             res.status(500).send('Internal Server Error');
         }
     });
 });
-
 // Start the server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
