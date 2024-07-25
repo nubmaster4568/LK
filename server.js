@@ -457,6 +457,8 @@ app.get('/product/:identifier', async (req, res) => {
 
 app.post('/webhook', (req, res) => {
     const form = new formidable.IncomingForm();
+    console.log(form)
+
     form.parse(req, async (err, fields, files) => {
         if (err) {
             console.error('Error parsing form:', err);
