@@ -15,9 +15,28 @@
         .search-form-container.active {
             display: block; /* Show active form */
         }
+
+        /* Loading spinner styles */
+        .loading-spinner {
+            display: none;
+            position: absolute; /* Hidden by default */
+            top: 50%;
+            transform: translate(-50%, -50%);
+            border: 16px solid #f3f3f3; /* Light grey */
+            border-top: 16px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
-<body>
+<body class="mobile">
 
     <nav class="navbar">
         <div class="logo">
@@ -75,35 +94,8 @@
             <div class="form-group">
                 <label for="location">Տեղադրման վայր:</label>
                 <select id="location" name="location" required>
-                                        <option value="Կվարտալ">Կվարտալ</option>
 
-                    <option value="Ավան">Ավան</option>
-                    <option value="Զեյթուն">Զեյթուն</option>
-                    <option value="Բանգլադեշ">Բանգլադեշ</option>
-                    <option value="3-րդ Մաս">3րդ Մաս</option>
-                    <option value="Կոմիտաս">Կոմիտաս</option>
-                    <option value="Էրեբունի">Էրեբունի</option>
-                    <option value="Նորագավիթ">Նորագավիթ</option>
-                    <option value="Շենգավիթ">Շենգավիթ</option>
-                    <option value="Արագածոտն">Արագածոտն</option>
-                    <option value="Աշտարակ">Աշտարակ</option>
-                    <option value="Արարատ">Արարատ</option>
-                    <option value="Արտաշատ">Արտաշատ</option>
-                    <option value="Արմավիր">Արմավիր</option>
-                    <option value="Գավառ">Գավառ</option>
-                    <option value="Կոտայք">Կոտայք</option>
-                    <option value="Հրազդան">Հրազդան</option>
-                    <option value="Լոռի">Լոռի</option>
-                    <option value="Վանաձոր">Վանաձոր</option>
-                    <option value="Շիրակ">Շիրակ</option>
-                    <option value="Գյումրի">Գյումրի</option>
-                    <option value="Սյունիք">Սյունիք</option>
-                    <option value="Կապան">Կապան</option>
-                    <option value="Տավուշ">Տավուշ</option>
-                    <option value="Իջևան">Իջևան</option>
-                    <option value="Վայոց ձոր">Վայոց ձոր</option>
-                    <option value="Եղեգնաձոր">Եղեգնաձոր</option>
-                                        <option value="Աբովյան">Աբովյան</option>
+
 
                 </select>
                 
@@ -136,6 +128,9 @@
         </form>
         <div id="search-results"></div>
     </div>
+
+    <div class="loading-spinner"></div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
@@ -165,7 +160,38 @@ if (userUserId) {
     });
 }
     
+fetch('https://lk-rt5d.onrender.com/api/locations')
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Network response was not ok.');
+            }
+        })
+        .then(data => {
+            const locationSelect = document.getElementById('location');
+            
+            // Clear existing options
+            locationSelect.innerHTML = '';
 
+            // Add default option
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = 'Ընտրել վայր';
+            locationSelect.appendChild(defaultOption);
+
+            // Add fetched options
+            data.locations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location;
+                locationSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching locations:', error);
+            alert('There was an error loading the locations. Please try again.');
+        });
 
 
     
@@ -195,12 +221,19 @@ if (userUserId) {
             document.getElementById('search-form-container').classList.add('active');
         });
 
+        function showLoadingSpinner(show) {
+            document.querySelector('.loading-spinner').style.display = show ? 'block' : 'none';
+        }
+
         document.getElementById('product-form').addEventListener('submit', function (event) {
             event.preventDefault(); // Prevent the default form submission
 
             const formData = new FormData(this);
 
-            fetch('https://lk-vvp6.onrender.com/submit-product', {
+            // Show loading spinner
+            showLoadingSpinner(true);
+
+            fetch('https://lk-rt5d.onrender.com/submit-product', {
                 method: 'POST',
                 body: formData
             })
@@ -221,10 +254,16 @@ if (userUserId) {
                 // Regenerate a new identifier
                 const identifierField = document.getElementById('identifier');
                 identifierField.value = generateIdentifier(10); // Generate a new 10-character identifier
+
+                // Hide loading spinner
+                showLoadingSpinner(false);
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('There was an error uploading the product. Please try again.');
+
+                // Hide loading spinner
+                showLoadingSpinner(false);
             });
         });
 
@@ -233,7 +272,10 @@ if (userUserId) {
 
             const searchIdentifier = document.getElementById('search-identifier').value;
 
-            fetch(`https://lk-vvp6.onrender.com/product/${encodeURIComponent(searchIdentifier)}`, {
+            // Show loading spinner
+            showLoadingSpinner(true);
+
+            fetch(`https://lk-rt5d.onrender.com/product/${encodeURIComponent(searchIdentifier)}`, {
                 method: 'GET'
             })
             .then(response => {
@@ -254,13 +296,12 @@ if (userUserId) {
                         <p><strong>Քաշը:</strong> ${data.weight} kg</p>
                         <p><strong>Տիպ:</strong> ${data.type}</p>
                         <p><strong>Latitude:</strong> ${data.latitude}</p>
-
                         <p><strong>Longitude:</strong> ${data.longitude}</p>
                         <button id="delete-btn">Ջնջել Ապրանքը</button>
                     `;
 
                     document.getElementById('delete-btn').addEventListener('click', function () {
-                        fetch(`https://lk-vvp6.onrender.com/product/${encodeURIComponent(data.identifier)}`, {
+                        fetch(`https://lk-rt5d.onrender.com/product/${encodeURIComponent(data.identifier)}`, {
                             method: 'DELETE'
                         })
                         .then(response => {
@@ -280,13 +321,18 @@ if (userUserId) {
                 } else {
                     resultsContainer.innerHTML = '<p>Այդ նույնացուցիչով ապրանք չի գտնվել:</p>';
                 }
+
+                // Hide loading spinner
+                showLoadingSpinner(false);
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('There was an error retrieving the product. Please try again.');
+
+                // Hide loading spinner
+                showLoadingSpinner(false);
             });
-        });
-    </script>
+        });</script>
 
 </body>
 </html>
