@@ -105,7 +105,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-        <script>$(document).ready(function() {
+    
+<script>$(document).ready(function() {
         var map;
         function fetchLocations() {
             console.log('test')
@@ -365,7 +366,7 @@ if (userUserId) {
     var lat = productItem.data('lat');
     var lng = productItem.data('lng');
 
-    var productName = $(this).siblings('.product-specific').find('.product-name').text();
+    var productName = $(this).siblings('.product-specific').find('.product-type').text();
     var productPrice = $(this).data('price');
     
     // Fetch conversion rate from API
@@ -487,8 +488,5 @@ $.ajax({
     }
 });
 
-    </script>
-    
-        </script>
-</body>
+    </script></body>
 </html>
