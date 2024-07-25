@@ -73,7 +73,6 @@
                 <div>
                     <div id="product-name"></div>
                     <div id="product-price"></div>
-                    <div id="product-address"></div>
                     <div id="amount-in-dash"></div>
                     <div id="cordinates"></div>
 
@@ -84,6 +83,7 @@
             </div>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.js'></script>
@@ -98,30 +98,33 @@
         
             // Fetch orders for the user based on userId
             function fetchOrders(userId) {
-                $.ajax({
-                    url: `https://lk-vvp6.onrender.com/api/orders/${userId}`, // Server endpoint to get orders
-                    method: 'GET',
-                    success: function(response) {
-                        // Clear the order list
-                        $('.order-list').empty();
-                        console.log(response)
-                        // Populate order items
-                        response.forEach(function(order) {
-                            $('.order-list').append(`
-                                <div class="order-item" data-id="${order.id}" data-name="${order.product_name}" data-price="${order.product_price}" data-address="${order.dash_address}" data-amount="${order.amount_in_dash}" data-lat="${order.lat}" data-lng="${order.lng}">
-                                    Պատվեր # ${order.id}. ${order.product_name} - ${order.product_price}
-                                </div>
-                            `);
-                        });
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error fetching orders:', error);
-                    }
+    console.log('Fetching orders for userId:', userId);
+
+    axios.post('http://localhost:3000/api/orders', { userId: userId })
+        .then(function (response) {
+            console.log('Response received:', response.data);
+            $('.order-list').empty();
+            if (Array.isArray(response.data) && response.data.length) {
+                response.data.forEach(function (order) {
+                    $('.order-list').append(`
+                        <div class="order-item" data-id="${order.id}" data-name="${order.product_name}" data-price="${order.product_price}" data-address="${order.dash_address}" data-amount="${order.amount_in_dash}" data-lat="${order.lat}" data-lng="${order.lng}">
+                            Պատվեր # ${order.id}. ${order.product_name} - ${order.product_price}
+                        </div>
+                    `);
                 });
+            } else {
+                console.log('No orders found.');
+                $('.order-list').append('<div>No orders found.</div>');
             }
-        
-            // Handle clicks on order items to show modal
-            $(document).on('click', '.order-item', function() {
+        })
+        .catch(function (error) {
+            console.error('Error fetching orders:', error);
+        });
+}
+
+
+
+$(document).on('click', '.order-item', function() {
                 const orderName = $(this).data('name');
                 const orderPrice = $(this).data('price');
                 const orderAddress = $(this).data('address');
