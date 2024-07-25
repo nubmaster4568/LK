@@ -21,7 +21,7 @@ const bot = new Telegraf(TELEGRAM_BOT_TOKEN);
 // PostgreSQL connection
 
 const client = new Pool({
-    connectionString: 'postgresql://nubmaster:RQM0rRXyAWxV5aVhPdj5YNDj6kzKLDN0@dpg-cqgf4k2ju9rs73cd4hjg-a.oregon-postgres.render.com/lavkanal',
+    connectionString: 'postgresql://lk_9jq0_user:c073E2081ABEamdvAYyeGEFikGxN8rmf@dpg-cqhd7vaju9rs738jijv0-a/lk_9jq0',
     ssl: { rejectUnauthorized: false }
 });
 client.connect();
