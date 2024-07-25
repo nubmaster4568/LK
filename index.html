@@ -100,111 +100,69 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src='https://api.mapbox.com/mapbox-gl-js/v2.9.0/mapbox-gl.js'></script>
     <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
-    <script>
-        $(document).ready(async function() {
-            var map;
-        
-            async function fetchLocations() {
-                try {
-                    console.log('Fetching locations...');
-                    const response = await $.ajax({
-                        url: 'https://lk-rt5d.onrender.com/api/locations',
-                        method: 'GET'
-                    });
-                    
-                    const locationFilter = $('#location-filter');
-                    locationFilter.empty(); // Clear existing options
-                    locationFilter.append('<option value="">Վայրերը</option>'); // Add default option
-        
-                    response.locations.forEach(location => {
-                        locationFilter.append(`<option value="${location}">${location}</option>`);
-                    });
-                } catch (error) {
-                    console.error('Failed to fetch locations:', error);
-                }
+    <script>$(document).ready(function() {
+        var map;
+        function fetchLocations() {
+            console.log('test')
+        $.ajax({
+            url: 'https://lk-rt5d.onrender.com/api/locations',
+            method: 'GET',
+            success: function(response) {
+                const locationFilter = $('#location-filter');
+                locationFilter.empty(); // Clear existing options
+                locationFilter.append('<option value="">Վայրերը</option>'); // Add default option
+
+                response.locations.forEach(location => {
+                    locationFilter.append(`<option value="${location}">${location}</option>`);
+                });
+            },
+            error: function() {
+                console.error('Failed to fetch locations.');
             }
-        
-            async function fetchAndDisplayProducts() {
-                try {
-                    console.log('Fetching and displaying products...');
-                    let response = await $.ajax({
-                        url: 'https://lk-rt5d.onrender.com/api/products',
-                        method: 'GET'
-                    });
-        
-                    $('#product-grid').empty();
-                    const products = response.products;
-        
-                    products.forEach(product => {
-                        const statusClass = product.status === 'OFF' ? 'status-off' : '';
-                        const statusMessage = statusClass ? '<div class="product-status status-off">Առկա չէ</div>' : '';
-        
-                        const productItem = $('<div>', { class: `product-item ${statusClass}` })
-                            .attr('data-name', product.name)
-                            .attr('data-price', `$${product.price.toFixed(2)}`)
-                            .attr('data-lat', product.latitude)
-                            .attr('data-lng', product.longitude)
-                            .attr('data-type', product.type)
-                            .attr('data-description', product.description)
-                            .attr('data-image', product.product_image)
-                            .attr('data-id', product.identifier)
-                            .attr('data-location', product.location)
-                            .html(`
-                                <div class="product-price">$${product.price.toFixed(2)}</div>
-                                <img src="${product.product_image}" alt="${product.name} Image">
-                                <div class="product-specific">
-                                    <div class="product-weight">${product.weight}g</div>
-                                    <div class="product-location">${product.location}</div>
-                                    <div class="product-type">${product.type}</div>
-                                </div>
-                                <button class="buy-button" data-id="${product.identifier}" data-price="${product.price}">Գնել</button>
-                                ${statusMessage}
-                            `);
-        
-                        $('#product-grid').append(productItem);
-                    });
-        
-                    // Generate GeoJSON data from products
-                    const geojsonData = {
-                        'type': 'FeatureCollection',
-                        'features': products.map(product => ({
-                            'type': 'Feature',
-                            'geometry': {
-                                'type': 'Polygon',
-                                'coordinates': [generateCircularPolygon([product.longitude, product.latitude], 0.002)]
-                            },
-                            'properties': {
-                                'name': product.name,
-                                'price': product.price,
-                                'type': product.type,
-                                'weight': product.weight
-                            }
-                        }))
-                    };
-        
-                    // Update GeoJSON data on the map
-                    if (map) {
-                        map.getSource('products').setData(geojsonData);
+        });
+
+
+    } 
+    
+    
+    fetchLocations();
+    $('#apply-filters').click(function() {
+                var locationFilter = $('#location-filter').val();
+                var typeFilter = $('#type-filter').val();
+                var maxPrice = parseFloat($('#price-filter').val()) || Infinity;
+
+                $('.product-item').each(function() {
+                    var itemLocation = $(this).data('location');
+                    var itemType = $(this).data('type');
+                    var itemPrice = parseFloat($(this).data('price').replace('$', ''));
+    
+                    // Check if the item matches the filters
+                    var matchesLocation = locationFilter === '' || itemLocation === locationFilter;
+                    var matchesType = typeFilter === '' || itemType === typeFilter;
+                    var matchesPrice = itemPrice <= maxPrice;
+    
+                    // Show or hide the item based on filter criteria
+                    if (matchesLocation && matchesType && matchesPrice) {
+                        $(this).show();
                     } else {
-                        initMap(); // Initialize map if not already initialized
-                        map.on('load', () => map.getSource('products').setData(geojsonData));
+                        $(this).hide();
                     }
-                } catch (error) {
-                    console.error('Failed to fetch products:', error);
-                    alert('Failed to fetch products.');
-                }
-            }
-        
-            async function checkUserAndCreateWallet(userId) {
-                try {
-                    console.log('Checking user and creating wallet...');
-                    const response = await $.ajax({
-                        url: 'https://lk-rt5d.onrender.com/api/check-user',
-                        method: 'POST',
-                        data: JSON.stringify({ user_id: userId }),
-                        contentType: 'application/json'
-                    });
-        
+                });
+            });        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+    
+        // Function to check user existence or create wallet
+        function checkUserAndCreateWallet(userId) {
+            $.ajax({
+                url: 'https://lk-rt5d.onrender.com/api/check-user',
+                method: 'POST',
+                data: JSON.stringify({ user_id: userId }),
+                contentType: 'application/json',
+                success: function(response) {
                     if (response.exists) {
                         console.log('User exists:', response.walletAddress);
                         sessionStorage.setItem('wallet', response.walletAddress);
@@ -213,167 +171,318 @@
                         console.log('New wallet address:', response.walletAddress);
                         sessionStorage.setItem('wallet', response.walletAddress);
                     }
-                } catch (error) {
-                    console.error('Failed to check user:', error);
+                },
+                error: function() {
+                    console.error('Failed to check user.');
                 }
-            }
-        
-            function getUrlParameter(name) {
-                name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-                var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-                var results = regex.exec(location.search);
-                return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
-            }
-        
-            function initMap(lat = 40.177200, lng = 44.503490) {
-                if (!map) {
-                    mapboxgl.accessToken = 'pk.eyJ1IjoibnVibWFzdGVyNjY2IiwiYSI6ImNseXVpN2cxNDByMHUybHNnOHZpcGppMHcifQ.n8AzCR_WFx-YDwy7G6z7Hg';
-                    map = new mapboxgl.Map({
-                        container: 'map',
-                        style: 'mapbox://styles/mapbox/dark-v11',
-                        center: [lng, lat],
-                        zoom: 15
-                    });
-        
-                    map.on('load', function () {
-                        map.addSource('products', {
-                            'type': 'geojson',
-                            'data': {
-                                'type': 'FeatureCollection',
-                                'features': []
-                            }
-                        });
-        
-                        map.addLayer({
-                            'id': 'product-polygons',
-                            'type': 'fill',
-                            'source': 'products',
-                            'paint': {
-                                'fill-color': '#ff0000', // Red color
-                                'fill-opacity': 0.5 // Semi-transparent
-                            }
-                        });
-        
-                        map.on('click', 'product-polygons', (e) => {
-                            new mapboxgl.Popup()
-                                .setLngLat(e.lngLat)
-                                .setHTML(`<strong>${e.features[0].properties.name}</strong><p>Տեսակ:${e.features[0].properties.type}</p><p>Գին: $${e.features[0].properties.price}</p><p>Քաշ: ${e.features[0].properties.weight}</p>`)
-                                .addTo(map);
-                        });
-        
-                        map.on('mouseenter', 'product-polygons', () => {
-                            map.getCanvas().style.cursor = 'pointer';
-                        });
-        
-                        map.on('mouseleave', 'product-polygons', () => {
-                            map.getCanvas().style.cursor = '';
-                        });
-                    });
-                } else {
-                    map.setCenter([lng, lat]);
-                }
-            }
-        
-            function generateCircularPolygon(center, radius, numPoints = 30) {
-                const coordinates = [];
-                for (let i = 0; i < numPoints; i++) {
-                    const angle = (i / numPoints) * 2 * Math.PI;
-                    const dx = radius * Math.cos(angle);
-                    const dy = radius * Math.sin(angle);
-                    coordinates.push([center[0] + dx, center[1] + dy]);
-                }
-                coordinates.push(coordinates[0]); // Close the polygon
-                return coordinates;
-            }
-        
-            // Fetch and display locations first
-            await fetchLocations();
-        
-            // Fetch and display products after locations are fetched
-            await fetchAndDisplayProducts();
-        
-            // Handle user and wallet creation after products are fetched
-            var userUserId = getUrlParameter('userId');
-            sessionStorage.setItem('user', userUserId);
-            if (userUserId) {
-                await checkUserAndCreateWallet(userUserId);
-        
-                // Update URLs with userId after user is checked/created
-                $('a').each(function() {
-                    var href = $(this).attr('href');
-                    if (href) {
-                        if (href.indexOf('?') !== -1) {
-                            $(this).attr('href', href + '&userId=' + userUserId);
-                        } else {
-                            $(this).attr('href', href + '?userId=' + userUserId);
-                        }
-                    }
+            });
+        }
+    
+        var userUserId = getUrlParameter('userId');
+        sessionStorage.setItem('user', userUserId);
+        if (userUserId) {
+            checkUserAndCreateWallet(userUserId);
+        }
+    
+        function initMap(lat = 40.177200, lng = 44.503490) {
+            if (!map) {
+                mapboxgl.accessToken = 'pk.eyJ1IjoibnVibWFzdGVyNjY2IiwiYSI6ImNseXVpN2cxNDByMHUybHNnOHZpcGppMHcifQ.n8AzCR_WFx-YDwy7G6z7Hg';
+                map = new mapboxgl.Map({
+                    container: 'map',
+                    style: 'mapbox://styles/mapbox/dark-v11',
+                    center: [lng, lat],
+                    zoom: 15
                 });
-            }
-        
-            // Update map center when a product is clicked
-            $(document).on('click', '.product-item', function() {
-                var lat = parseFloat($(this).data('lat'));
-                var lng = parseFloat($(this).data('lng'));
-                initMap(lat, lng); // Update map center
-            });
-        
-            // Handle product purchase
-            $(document).on('click', '.buy-button', async function() {
-                var price = $(this).siblings('.product-price').text().replace('$', '');
-                var dashAddress = sessionStorage.getItem('wallet');
-        
-                var productId = $(this).data('id');
-                sessionStorage.setItem('productid', productId);
-        
-                var productImage = $(this).siblings('img').attr('src');
-                var productItem = $(this).closest('.product-item');
-        
-                var lat = productItem.data('lat');
-                var lng = productItem.data('lng');
-        
-                var productName = $(this).siblings('.product-specific').find('.product-type').text();
-                var userId = getUrlParameter('userId');
-        
-                var purchaseUrl = `https://lk-rt5d.onrender.com/api/purchase?userId=${userId}&price=${price}&lat=${lat}&lng=${lng}&dashAddress=${dashAddress}&productName=${productName}&productId=${productId}`;
-        
-                try {
-                    const response = await $.ajax({
-                        url: purchaseUrl,
-                        method: 'GET'
+    
+                map.on('load', function () {
+                    // Add an empty source and layer for products initially
+                    map.addSource('products', {
+                        'type': 'geojson',
+                        'data': {
+                            'type': 'FeatureCollection',
+                            'features': []
+                        }
                     });
-                    if (response.success) {
-                        console.log('Purchase successful:', response);
-                        alert('Purchase successful!');
-        
-                        // Display a confirmation popup with Lottie animation
-                        $('#confirmation-popup').show();
-                        const animation = bodymovin.loadAnimation({
-                            container: document.getElementById('confirmation-lottie'),
-                            renderer: 'svg',
-                            loop: false,
-                            autoplay: true,
-                            path: 'lottie/animation.json'
-                        });
-        
-                        animation.addEventListener('complete', function() {
-                            setTimeout(function() {
-                                window.location.href = 'main_menu.html'; // Redirect after animation
-                            }, 2000); // Delay redirect to let animation finish
-                        });
-        
-                    } else {
-                        console.error('Purchase failed:', response.message);
-                        alert('Purchase failed. Please try again.');
-                    }
-                } catch (error) {
-                    console.error('Failed to process purchase:', error);
-                    alert('Failed to process purchase.');
+    
+                    map.addLayer({
+                        'id': 'product-polygons',
+                        'type': 'fill',
+                        'source': 'products',
+                        'paint': {
+                            'fill-color': '#ff0000', // Red color
+                            'fill-opacity': 0.5 // Semi-transparent
+                        }
+                    });
+    
+                    // Optional: Add popup on click
+                    map.on('click', 'product-polygons', (e) => {
+                        new mapboxgl.Popup()
+                            .setLngLat(e.lngLat)
+                            .setHTML(`<strong>${e.features[0].properties.name}</strong><p>Տեսակ:${e.features[0].properties.type}</p><p>Գին: $${e.features[0].properties.price}</p><p>Քաշ: ${e.features[0].properties.weight}</p><p>ID: ${e.features[0].properties.id}</p>`)
+                            .addTo(map);
+                    });
+    
+                    // Change cursor to pointer when hovering over points
+                    map.on('mouseenter', 'product-polygons', () => {
+                        map.getCanvas().style.cursor = 'pointer';
+                    });
+    
+                    // Change cursor back to default when leaving points
+                    map.on('mouseleave', 'product-polygons', () => {
+                        map.getCanvas().style.cursor = '';
+                    });
+                });
+            } else {
+                map.setCenter([lng, lat]);
+            }
+        }
+    
+        function generateCircularPolygon(center, radius, numPoints = 30) {
+            const coordinates = [];
+            for (let i = 0; i < numPoints; i++) {
+                const angle = (i / numPoints) * 2 * Math.PI;
+                const dx = radius * Math.cos(angle);
+                const dy = radius * Math.sin(angle);
+                coordinates.push([center[0] + dx, center[1] + dy]);
+            }
+            coordinates.push(coordinates[0]); // Close the polygon
+            return coordinates;
+        }
+    
+        var userUserId = getUrlParameter('userId');
+if (userUserId) {
+
+    $('a').each(function() {
+        var href = $(this).attr('href'); // Get the current href attribute
+        if (href) {
+            // Check if href already contains a query string
+            if (href.indexOf('?') !== -1) {
+                // Append userId to existing query parameters
+                $(this).attr('href', href + '&userId=' + userUserId);
+            } else {
+                // Add userId as the first query parameter
+                $(this).attr('href', href + '?userId=' + userUserId);
+            }
+        }
+    });
+}
+        async function fetchAndDisplayProducts() {
+            try {
+                let response = await $.ajax({
+                    url: 'https://lk-rt5d.onrender.com/api/products',
+                    method: 'GET'
+                });
+    
+                $('#product-grid').empty();
+                const products = response.products;
+    
+                products.forEach(product => {
+                    const productItem = $('<div>', { class: 'product-item' })
+                        .attr('data-name', product.name)
+                        .attr('data-price', `$${product.price.toFixed(2)}`)
+                        .attr('data-lat', product.latitude)
+                        .attr('data-lng', product.longitude)
+                        .attr('data-type', product.type)
+                        .attr('data-description', product.description)
+                        .attr('data-image', product.product_image)
+                        .attr('data-id', product.identifier)
+                        .attr('data-location', product.location)
+                        .html(`
+                            <div class="product-price">$${product.price.toFixed(2)}</div>
+                            <img src="${product.product_image}" alt="${product.name} Image">
+                            <div class="product-specific">
+                                <div class="product-weight">${product.weight}g</div>
+                                <div class="product-location">${product.location}</div>
+                                <div class="product-type">${product.type}</div>
+                            </div>
+                            <button class="buy-button" id >Գնել</button>
+                        `);
+                        productItem.find('.buy-button')
+    .attr('data-id', product.identifier)
+    .attr('data-price', product.price);
+                    $('#product-grid').append(productItem);
+                });
+    
+                // Generate GeoJSON data from products
+                const geojsonData = {
+                    'type': 'FeatureCollection',
+                    'features': products.map(product => ({
+                        'type': 'Feature',
+                        'geometry': {
+                            'type': 'Polygon',
+                            'coordinates': [generateCircularPolygon([product.longitude, product.latitude], 0.002)]
+                        },
+                        'properties': {
+                            'name': product.name,
+                            'price': product.price,
+                            'type': product.type,
+                            'id': product.identifier,
+                            'weight': product.weight
+                        }
+                    }))
+                };
+    
+                // Update GeoJSON data on the map
+                if (map) {
+                    map.getSource('products').setData(geojsonData);
+                } else {
+                    initMap(); // Initialize map if not already initialized
+                    map.on('load', () => map.getSource('products').setData(geojsonData));
+                }
+    
+            } catch (error) {
+                console.error('Failed to fetch products:', error);
+                alert('Failed to fetch products.');
+            }
+        }
+    
+        fetchAndDisplayProducts();
+    
+        // Update map center when a product is clicked
+        $(document).on('click', '.product-item', function() {
+            var lat = parseFloat($(this).data('lat'));
+            var lng = parseFloat($(this).data('lng'));
+            initMap(lat, lng); // Update map center
+        });
+    
+        // Additional event handlers and AJAX requests for product purchase
+        $(document).on('click', '.buy-button', function() {
+    var price = $(this).siblings('.product-price').text().replace('$', '');
+    var dashAddress = sessionStorage.getItem('wallet');
+    
+    // Extract product ID and other details
+    var productId = $(this).data('id'); 
+    sessionStorage.setItem('productid',productId);
+
+    var productImage = $(this).siblings('img').attr('src');
+    var productItem = $(this).closest('.product-item');
+
+    var lat = productItem.data('lat');
+    var lng = productItem.data('lng');
+
+    var productName = $(this).siblings('.product-specific').find('.product-name').text();
+    var productPrice = $(this).data('price');
+    
+    // Fetch conversion rate from API
+// Assuming you have 'price' as the amount in fiat currency you want to convert
+$.ajax({
+    url: 'https://api.coingecko.com/api/v3/simple/price',
+    method: 'GET',
+    data: {
+        ids: 'litecoin',       // Cryptocurrency ID (e.g., 'litecoin' for LTC)
+        vs_currencies: 'usd'   // Currency to compare against (e.g., 'usd')
+    },
+    success: function(response) {
+        if (response.litecoin) {
+            var ltcPriceInUSD = response.litecoin.usd;
+            var amountInLTC = parseFloat(price) / ltcPriceInUSD; // Convert fiat amount to LTC
+
+            // Update modal with product details
+            $('#address').text(dashAddress);
+
+            // Define CSS properties for word breaking
+            var wordBreakingProperties = {
+                'word-wrap': 'break-word',  // Allow long words to be broken and wrap onto the next line
+                'overflow-wrap': 'break-word', // Ensure long words or URLs break properly
+                'word-break': 'break-all', // Break words at any point if necessary
+                'max-width': '100%' // Ensure the element does not exceed the width of its container
+            };
+
+            // Apply the CSS properties to the #address element
+            $('#address').css(wordBreakingProperties);
+
+            $('#amount-value').text(amountInLTC.toFixed(6)); // Display LTC amount
+            $('#product-name').text(productName);
+            $('#product-price').text('$' + parseFloat(price).toFixed(2));
+
+            // Show loading animation
+            $('#loading-animation').show();
+            $('#qr-code').hide();
+
+            // Generate QR Code for DASH address
+            var qrCodeUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' + encodeURIComponent(dashAddress);
+            $('#qr-code').attr('src', qrCodeUrl).show();
+
+            // Show payment modal
+            $('#payment-modal').fadeIn();
+            console.log(amountInLTC.toFixed(6));
+            console.log(productName,price,sessionStorage.getItem('productid'),sessionStorage.getItem('user'),amountInLTC,lat,lng)
+            $.ajax({
+                url: 'https://lk-rt5d.onrender.com/api/transactions',
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    productName: productName,
+                    productPrice: parseFloat(price).toFixed(2),
+                    productId: sessionStorage.getItem('productid'),
+                    user: sessionStorage.getItem('user'),
+                    crypto: amountInLTC.toFixed(6),
+                    lat: lat,
+                    lng: lng
+                }),
+                success: function(response) {
+                    console.log('Transaction recorded successfully:', response);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error recording transaction:', xhr.responseText); // Log server response for more details
                 }
             });
+
+        } else {
+            console.error('Error fetching conversion rate:', 'Litecoin price data not found');
+        }
+    },
+    error: function(xhr, status, error) {
+        console.error('Error fetching conversion rate:', xhr.responseText); // Log server response for more details
+    }
+});
+
+});
+
+
+    
+
         });
-        </script>
-        
+ // Fetch and display products on page load
+ $('.close-btn').click(function() {
+    // Show confirmation dialog
+    var confirmation = confirm("Եթե ​​դեռ ցանկանում եք վճարում կատարել, ապա չպետք է փակեք այս պատուհանը, բայց կարող եք անմիջապես փակել բոտը");
+    
+    // If the user confirms, close the modal and update the transaction status
+    if (confirmation) {
+        // Retrieve productId from sessionStorage
+        var productId = sessionStorage.getItem('productid');
+
+        // Check if productId is available
+        if (productId) {
+            // Make AJAX request to update transaction status
+            $.ajax({
+                url: 'https://lk-rt5d.onrender.com/api/deleteTransaction', // Replace with your server endpoint
+                method: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    productId: productId,
+                }),
+                success: function(response) {
+                    console.log('Transaction status updated successfully:', response);
+                    // Hide the modal after updating the transaction status
+                    $('#payment-modal').fadeOut();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error updating transaction status:', error);
+                    // Hide the modal even if there is an error
+                    $('#payment-modal').fadeOut();
+                }
+            });
+        } else {
+            console.error('No productId found in sessionStorage.');
+            // Hide the modal if no productId is found
+            $('#payment-modal').fadeOut();
+        }
+    }
+});
+
+    </script>
     
         </script>
 </body>
