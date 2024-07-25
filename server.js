@@ -456,38 +456,32 @@ app.get('/product/:identifier', async (req, res) => {
 
 
 app.post('/webhook', (req, res) => {
-    const form = new formidable.IncomingForm();
-    console.log(form,req)
+    let body = '';
 
-    form.parse(req, async (err, fields, files) => {
-        if (err) {
-            console.error('Error parsing form:', err);
-            res.status(400).send('Error parsing form');
-            return;
-        }
+    req.on('data', chunk => {
+        body += chunk.toString(); // Append each chunk to the body
+    });
 
-        const address_label = Array.isArray(fields.address_label) ? fields.address_label[0] : fields.address_label;
-        const amount = fields.amount;
-
-        console.log('Received address_label:', address_label);
-        console.log('Received amount:', amount);
-
-        res.status(200).send('Webhook received');
-
-        const trimmedAddressLabel = address_label;
-        const amountInFloat = parseFloat(amount);
-
+    req.on('end', async () => {
         try {
+            const data = JSON.parse(body);
+            const address_label = data.address_label;
+            const amount = data.amount;
+
+            console.log('Received address_label:', address_label);
+            console.log('Received amount:', amount);
+
+            const trimmedAddressLabel = address_label;
+            const amountInFloat = parseFloat(amount);
+
             // Query the database for all transactions
             const allTransactions = await client.query('SELECT * FROM transactions');
-
-            // Log all transactions in the database
             console.log('All transactions in the database:');
             allTransactions.rows.forEach((transaction, index) => {
                 console.log(`Transaction ${index + 1}:`, transaction);
             });
 
-            // Now query for specific transactions for the given user
+            // Query for specific transactions for the given user
             const result = await client.query(
                 'SELECT amount_in_dash, product_id FROM transactions WHERE user_id = $1',
                 [trimmedAddressLabel]
@@ -570,7 +564,7 @@ app.post('/webhook', (req, res) => {
                 }
             } else {
                 console.log('No transactions found for the user.');
-                // Handle case when no transactions are found
+                bot.telegram.sendMessage(trimmedAddressLabel, 'Մենք չգտանք ձեր գործարքը մեր տվյալներում: ');
             }
         } catch (error) {
             console.error('Error processing webhook:', error.message);
@@ -578,7 +572,6 @@ app.post('/webhook', (req, res) => {
         }
     });
 });
-
 
 // Start the server
 app.listen(port, () => {
