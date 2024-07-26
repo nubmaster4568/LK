@@ -503,9 +503,6 @@ app.post('/webhook', (req, res) => {
                     await client.query('DELETE FROM transactions WHERE product_id = $1', [productId]);
                     console.log('Transaction deleted successfully.');
 
-                    // Delete the product from the database
-
-
                     // Fetch product information for sending to user
                     const productResult = await client.query(
                         'SELECT location_image, latitude, longitude FROM products WHERE identifier = $1',
@@ -514,68 +511,44 @@ app.post('/webhook', (req, res) => {
 
                     if (productResult.rows.length > 0) {
                         const row = productResult.rows[0];
-                        const latitude = (row.latitude || '').trim();
-                        const longitude = (row.longitude || '').trim();
+
+                        // Handle latitude and longitude, ensuring they are treated as strings
+                        const latitude = (row.latitude !== null && row.latitude !== undefined ? row.latitude.toString() : '').trim();
+                        const longitude = (row.longitude !== null && row.longitude !== undefined ? row.longitude.toString() : '').trim();
+
+                        console.log('Latitude:', latitude);
+                        console.log('Longitude:', longitude);
 
                         if (row.location_image) {
                             // Save the image as a JPG file
-                            const filePath = path.join(__dirname, 'location_image.jpg');
-                            fs.writeFile(filePath, row.location_image, 'base64', (err) => {
-                                if (err) {
-                                    console.error('Error saving image:', err.message);
-                                    return;
-                                }
-                                console.log('Image saved successfully.');
-
-                                // Send the image to the user via Telegram
-                                bot.telegram.sendPhoto(trimmedAddressLabel, { source: filePath })
-                                    .then(() => {
-                                        console.log('Image sent successfully.');
-                                        // Delete the image file after sending
-                                        fs.unlink(filePath, (err) => {
-                                            if (err) {
-                                                console.error('Error deleting image:', err.message);
-                                            } else {
-                                                console.log('Image deleted successfully.');
-                                            }
-                                        });
-                                    })
-                                    .catch(error => {
-                                        console.error('Error sending image to Telegram:', error.message);
-                                    });
-
-                    client.query('DELETE FROM products WHERE identifier = $1', [productId]);
-                    console.log('Product deleted successfully.');
-                                bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
-                            });
+                            const imageFilePath = path.join(__dirname, 'location_image.jpg');
+                            fs.writeFileSync(imageFilePath, row.location_image);
+                            console.log('Location image saved successfully.');
                         } else {
-                            console.log('No location image found for the product.');
-                            // Send a message without image if needed
-                            bot.telegram.sendMessage(trimmedAddressLabel, 'Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:');
-
-                            // Send confirmation message to user
-                            bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
+                            console.log('No location image found for product ID:', productId);
                         }
+
+                        // Optionally, send the location details or image to the user
+                        // For example, you might use the Telegraf bot here
+
+                        res.send('Webhook processed successfully.');
                     } else {
-                        console.log('No product found for the given product ID.');
-                        bot.telegram.sendMessage(trimmedAddressLabel, `Ստացել ենք ձեր փոխանցումը բայց չկարողացանք հաստատել ապրանքի արկայությունը, խնդրեում ենք կապնվել օպերատորին`, { parse_mode: 'HTML' });
+                        res.status(404).send('Product not found.');
                     }
                 } else {
-                    console.log('Transaction amount is less than required. Amount:', amountInFloat, 'Required:', amountInDash);
-                    bot.telegram.sendMessage(trimmedAddressLabel, 'Գործարքի գումարը պահանջվածից պակաս է: ');
+                    console.log('Transaction amount not within acceptable range.');
+                    res.status(400).send('Invalid transaction amount.');
                 }
             } else {
-                console.log('No transactions found for the user.');
-                bot.telegram.sendMessage(trimmedAddressLabel, 'Մենք չգտանք ձեր գործարքը մեր տվյալներում: ');
+                res.status(404).send('No transaction found for this user.');
             }
-
-            res.status(200).send('Webhook received');
-        } catch (error) {
-            console.error('Error processing webhook:', error.message);
-            res.status(500).send('Internal Server Error');
+        } catch (err) {
+            console.error('Error processing webhook:', err.message);
+            res.status(500).send('Error processing webhook.');
         }
     });
 });
+
 // Start the server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
