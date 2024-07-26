@@ -297,6 +297,9 @@ if (userUserId) {
                             </div>
                             <button class="buy-button" id >Գնել</button>
                         `);
+                    if (product.status === 'OFF') {
+                    $productItem.addClass('status-off');
+                }
                         productItem.find('.buy-button')
     .attr('data-id', product.identifier)
     .attr('data-price', product.price);
