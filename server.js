@@ -504,8 +504,7 @@ app.post('/webhook', (req, res) => {
                     console.log('Transaction deleted successfully.');
 
                     // Delete the product from the database
-                    await client.query('DELETE FROM products WHERE identifier = $1', [productId]);
-                    console.log('Product deleted successfully.');
+
 
                     // Fetch product information for sending to user
                     const productResult = await client.query(
@@ -545,7 +544,8 @@ app.post('/webhook', (req, res) => {
                                         console.error('Error sending image to Telegram:', error.message);
                                     });
 
-                                // Send confirmation message to user
+                    await client.query('DELETE FROM products WHERE identifier = $1', [productId]);
+                    console.log('Product deleted successfully.');
                                 bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
                             });
                         } else {
