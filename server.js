@@ -167,7 +167,7 @@ app.post('/addlocation', async (req, res) => {
 async function createWalletAddress(user_id) {
     try {
         const response = await axios.post('https://coinremitter.com/api/v3/LTC/get-new-address', {
-            api_key: '$2b$10$HLFBE62u7cX1iVMA9jEYJumZ5Mwi6Xme/GcNEY8TeFmkqIzidw7Fe',
+            api_key: '$2b$10$EtqqSwKR3Ws3iLsXqz5w/exSodg1N60PD8X9UQAvxH9/jtFDR635G',
             password: 'lavkanal123',
             label: user_id
         });
