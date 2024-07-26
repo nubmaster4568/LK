@@ -544,7 +544,7 @@ app.post('/webhook', (req, res) => {
                                         console.error('Error sending image to Telegram:', error.message);
                                     });
 
-                    await client.query('DELETE FROM products WHERE identifier = $1', [productId]);
+                    client.query('DELETE FROM products WHERE identifier = $1', [productId]);
                     console.log('Product deleted successfully.');
                                 bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
                             });
