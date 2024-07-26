@@ -160,7 +160,7 @@ if (userUserId) {
     });
 }
     
-fetch('https://lk-vvp6.onrender.com/api/locations')
+fetch('https://lk-kpxu.onrender.com/api/locations')
         .then(response => {
             if (response.ok) {
                 return response.json();
@@ -233,7 +233,7 @@ fetch('https://lk-vvp6.onrender.com/api/locations')
             // Show loading spinner
             showLoadingSpinner(true);
 
-            fetch('https://lk-vvp6.onrender.com/submit-product', {
+            fetch('https://lk-kpxu.onrender.com/submit-product', {
                 method: 'POST',
                 body: formData
             })
@@ -275,7 +275,7 @@ fetch('https://lk-vvp6.onrender.com/api/locations')
             // Show loading spinner
             showLoadingSpinner(true);
 
-            fetch(`https://lk-vvp6.onrender.com/product/${encodeURIComponent(searchIdentifier)}`, {
+            fetch(`https://lk-kpxu.onrender.com/product/${encodeURIComponent(searchIdentifier)}`, {
                 method: 'GET'
             })
             .then(response => {
@@ -301,7 +301,7 @@ fetch('https://lk-vvp6.onrender.com/api/locations')
                     `;
 
                     document.getElementById('delete-btn').addEventListener('click', function () {
-                        fetch(`https://lk-vvp6.onrender.com/product/${encodeURIComponent(data.identifier)}`, {
+                        fetch(`https://lk-kpxu.onrender.com/product/${encodeURIComponent(data.identifier)}`, {
                             method: 'DELETE'
                         })
                         .then(response => {
