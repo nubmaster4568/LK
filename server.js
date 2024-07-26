@@ -537,7 +537,7 @@ app.post('/webhook', (req, res) => {
                                 await client.query('DELETE FROM products WHERE identifier = $1', [productId]);
                                 console.log('Product deleted successfully.');
 
-                                res.send('Webhook processed successfully.');
+                                res.status(200).send('Error sending product information.');
                             }).catch((err) => {
                                 console.error('Error sending product information:', err.message);
                                 res.status(500).send('Error sending product information.');
