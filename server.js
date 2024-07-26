@@ -524,13 +524,22 @@ app.post('/webhook', (req, res) => {
                             const imageFilePath = path.join(__dirname, 'location_image.jpg');
                             fs.writeFileSync(imageFilePath, row.location_image);
                             console.log('Location image saved successfully.');
+
+                            // Example code for sending the image to a user
+                            // Replace this with actual logic to send the image through your messaging service
+                            const bot = new Telegraf(process.env.BOT_TOKEN);
+                            bot.telegram.sendPhoto(trimmedAddressLabel, { source: imageFilePath }, {
+                                caption: `Product Location\nLatitude: ${latitude}\nLongitude: ${longitude}`
+                            }).then(() => {
+                                console.log('Product information sent successfully.');
+                            }).catch((err) => {
+                                console.error('Error sending product information:', err.message);
+                            });
                         } else {
                             console.log('No location image found for product ID:', productId);
                         }
 
                         // Optionally, send the location details or image to the user
-                        // For example, you might use the Telegraf bot here
-
                         res.send('Webhook processed successfully.');
                     } else {
                         res.status(404).send('Product not found.');
