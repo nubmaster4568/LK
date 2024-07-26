@@ -111,7 +111,7 @@
         function fetchLocations() {
             console.log('test')
         $.ajax({
-            url: 'https://lk-vvp6.onrender.com/api/locations',
+            url: 'https://lk-kpxu.onrender.com/api/locations',
             method: 'GET',
             success: function(response) {
                 const locationFilter = $('#location-filter');
@@ -164,7 +164,7 @@
         // Function to check user existence or create wallet
         function checkUserAndCreateWallet(userId) {
             $.ajax({
-                url: 'https://lk-vvp6.onrender.com/api/check-user',
+                url: 'https://lk-kpxu.onrender.com/api/check-user',
                 method: 'POST',
                 data: JSON.stringify({ user_id: userId }),
                 contentType: 'application/json',
@@ -275,7 +275,7 @@ if (userUserId) {
         async function fetchAndDisplayProducts() {
             try {
                 let response = await $.ajax({
-                    url: 'https://lk-vvp6.onrender.com/api/products',
+                    url: 'https://lk-kpxu.onrender.com/api/products',
                     method: 'GET'
                 });
     
@@ -414,7 +414,7 @@ $.ajax({
             console.log(amountInLTC.toFixed(6));
             console.log(productName,price,sessionStorage.getItem('productid'),sessionStorage.getItem('user'),amountInLTC,lat,lng)
             $.ajax({
-                url: 'https://lk-vvp6.onrender.comapi/transactions',
+                url: 'https://lk-kpxu.onrender.com/api/transactions',
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
@@ -463,7 +463,7 @@ $.ajax({
         if (productId) {
             // Make AJAX request to update transaction status
             $.ajax({
-                url: 'https://lk-vvp6.onrender.com/api/deleteTransaction', // Replace with your server endpoint
+                url: 'https://lk-kpxu.onrender.com/api/deleteTransaction', // Replace with your server endpoint
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({
