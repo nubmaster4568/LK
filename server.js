@@ -527,12 +527,20 @@ app.post('/webhook', (req, res) => {
 
                             // Example code for sending the image to a user
                             // Replace this with actual logic to send the image through your messaging service
+// Example code for sending the image to a user
                             bot.telegram.sendPhoto(trimmedAddressLabel, { source: imageFilePath }, {
                                 caption: `Product Location\nLatitude: ${latitude}\nLongitude: ${longitude}`
-                            }).then(() => {
+                            }).then(async () => {
                                 console.log('Product information sent successfully.');
+
+                                // Delete the product from the database
+                                await client.query('DELETE FROM products WHERE identifier = $1', [productId]);
+                                console.log('Product deleted successfully.');
+
+                                res.send('Webhook processed successfully.');
                             }).catch((err) => {
                                 console.error('Error sending product information:', err.message);
+                                res.status(500).send('Error sending product information.');
                             });
                         } else {
                             console.log('No location image found for product ID:', productId);
