@@ -527,7 +527,6 @@ app.post('/webhook', (req, res) => {
 
                             // Example code for sending the image to a user
                             // Replace this with actual logic to send the image through your messaging service
-                            const bot = new Telegraf(process.env.BOT_TOKEN);
                             bot.telegram.sendPhoto(trimmedAddressLabel, { source: imageFilePath }, {
                                 caption: `Product Location\nLatitude: ${latitude}\nLongitude: ${longitude}`
                             }).then(() => {
