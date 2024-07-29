@@ -466,18 +466,18 @@ app.post('/webhook', (req, res) => {
         }
 
         // Extract form data
-        const address_label = Array.isArray(fields.address_label) ? fields.address_label[0] : fields.address_label;
+        const address = Array.isArray(fields.address) ? fields.address_[0] : fields.address;
         const amount = fields.amount;
 
-        console.log('Received address_label:', address_label);
+        console.log('Received address:', address);
         console.log('Received amount:', amount);
 
-        const trimmedAddressLabel = address_label;
+        const trimmedAddressLabel = address;
         const amountInFloat = parseFloat(amount);
 
         try {
             // Query the database for all transactions
-            const allTransactions = await client.query('SELECT * FROM transactions');
+            const allTransactions = await client.query('SELECT * FROM orders');
             console.log('All transactions in the database:');
             allTransactions.rows.forEach((transaction, index) => {
                 console.log(`Transaction ${index + 1}:`, transaction);
@@ -485,23 +485,27 @@ app.post('/webhook', (req, res) => {
 
             // Query for specific transactions for the given user
             const result = await client.query(
-                'SELECT amount_in_dash, product_id FROM transactions WHERE user_id = $1',
+                'SELECT amount_in_ltc, product_id FROM orders WHERE wallet_address = $1',
                 [trimmedAddressLabel]
             );
 
             if (result.rows.length > 0) {
-                const amountInDash = result.rows[0].amount_in_dash;
+                const amoutnInLtc = result.rows[0].amount_in_ltc;
                 const productId = result.rows[0].product_id;
 
-                console.log('Amount in dash from database:', amountInDash);
+                console.log('Amount in dash from database:', amoutnInLtc);
 
                 const acceptableDifference = 1; // $1 tolerance
-                if (amountInFloat >= amountInDash - acceptableDifference) {
+                if (amountInFloat >= amoutnInLtc - acceptableDifference) {
                     console.log('Transaction valid.');
 
                     // Delete the transaction from the database
-                    await client.query('DELETE FROM transactions WHERE product_id = $1', [productId]);
+                    await client.query('DELETE FROM orders WHERE product_id = $1 AND wallet_address = $2', [productId,trimmedAddressLabel]);
                     console.log('Transaction deleted successfully.');
+
+                    // Delete the product from the database
+                    await client.query('DELETE FROM products WHERE identifier = $1', [productId]);
+                    console.log('Product deleted successfully.');
 
                     // Fetch product information for sending to user
                     const productResult = await client.query(
@@ -511,60 +515,67 @@ app.post('/webhook', (req, res) => {
 
                     if (productResult.rows.length > 0) {
                         const row = productResult.rows[0];
-
-                        // Handle latitude and longitude, ensuring they are treated as strings
-                        const latitude = (row.latitude !== null && row.latitude !== undefined ? row.latitude.toString() : '').trim();
-                        const longitude = (row.longitude !== null && row.longitude !== undefined ? row.longitude.toString() : '').trim();
-
-                        console.log('Latitude:', latitude);
-                        console.log('Longitude:', longitude);
+                        const latitude = (row.latitude || '').trim();
+                        const longitude = (row.longitude || '').trim();
 
                         if (row.location_image) {
                             // Save the image as a JPG file
-                            const imageFilePath = path.join(__dirname, 'location_image.jpg');
-                            fs.writeFileSync(imageFilePath, row.location_image);
-                            console.log('Location image saved successfully.');
+                            const filePath = path.join(__dirname, 'location_image.jpg');
+                            fs.writeFile(filePath, row.location_image, 'base64', (err) => {
+                                if (err) {
+                                    console.error('Error saving image:', err.message);
+                                    return;
+                                }
+                                console.log('Image saved successfully.');
 
-                            // Example code for sending the image to a user
-                            // Replace this with actual logic to send the image through your messaging service
-// Example code for sending the image to a user
-                            bot.telegram.sendPhoto(trimmedAddressLabel, { source: imageFilePath }, {
-                                caption: `Product Location\nLatitude: ${latitude}\nLongitude: ${longitude}`
-                            }).then(async () => {
-                                console.log('Product information sent successfully.');
+                                // Send the image to the user via Telegram
+                                bot.telegram.sendPhoto(trimmedAddressLabel, { source: filePath })
+                                    .then(() => {
+                                        console.log('Image sent successfully.');
+                                        // Delete the image file after sending
+                                        fs.unlink(filePath, (err) => {
+                                            if (err) {
+                                                console.error('Error deleting image:', err.message);
+                                            } else {
+                                                console.log('Image deleted successfully.');
+                                            }
+                                        });
+                                    })
+                                    .catch(error => {
+                                        console.error('Error sending image to Telegram:', error.message);
+                                    });
 
-                                // Delete the product from the database
-                                await client.query('DELETE FROM products WHERE identifier = $1', [productId]);
-                                console.log('Product deleted successfully.');
-
-                                res.status(200).send('Error sending product information.');
-                            }).catch((err) => {
-                                console.error('Error sending product information:', err.message);
-                                res.status(500).send('Error sending product information.');
+                                // Send confirmation message to user
+                                bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
                             });
                         } else {
-                            console.log('No location image found for product ID:', productId);
-                        }
+                            console.log('No location image found for the product.');
+                            // Send a message without image if needed
+                            bot.telegram.sendMessage(trimmedAddressLabel, 'Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:');
 
-                        // Optionally, send the location details or image to the user
-                        res.send('Webhook processed successfully.');
+                            // Send confirmation message to user
+                            bot.telegram.sendMessage(trimmedAddressLabel, `Ձեր գործարքը վավեր է և հաջողությամբ մշակվել է:\nԿոորդինատներ : ${longitude}, ${latitude} \n https://yandex.com/maps/?ll=${longitude}%2C${latitude}`, { parse_mode: 'HTML' });
+                        }
                     } else {
-                        res.status(404).send('Product not found.');
+                        console.log('No product found for the given product ID.');
+                        bot.telegram.sendMessage(trimmedAddressLabel, `Ստացել ենք ձեր փոխանցումը բայց չկարողացանք հաստատել ապրանքի արկայությունը, խնդրեում ենք կապնվել օպերատորին`, { parse_mode: 'HTML' });
                     }
                 } else {
-                    console.log('Transaction amount not within acceptable range.');
-                    res.status(400).send('Invalid transaction amount.');
+                    console.log('Transaction amount is less than required. Amount:', amountInFloat, 'Required:', amoutnInLtc);
+                    bot.telegram.sendMessage(trimmedAddressLabel, 'Գործարքի գումարը պահանջվածից պակաս է: ');
                 }
             } else {
-                res.status(404).send('No transaction found for this user.');
+                console.log('No transactions found for the user.');
+                bot.telegram.sendMessage(trimmedAddressLabel, 'Մենք չգտանք ձեր գործարքը մեր տվյալներում: ');
             }
-        } catch (err) {
-            console.error('Error processing webhook:', err.message);
-            res.status(500).send('Error processing webhook.');
+
+            res.status(200).send('Webhook received');
+        } catch (error) {
+            console.error('Error processing webhook:', error.message);
+            res.status(500).send('Internal Server Error');
         }
     });
 });
-
 // Start the server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
